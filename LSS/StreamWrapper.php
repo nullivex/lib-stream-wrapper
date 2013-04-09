@@ -295,6 +295,8 @@ abstract class StreamWrapper implements StreamWrapperInterface {
 		$stat[10]	=	$stat['ctime']		= $this->getCtime();
 		//11	blksize	blocksize of filesystem IO **
 		$stat[11]	=	$stat['blksize']	= mda_get($this->info,'blksize');
+		if($stat['blksize'] == 0)
+			$stat[11] = $stat['blksize'] = 512;
 		//12	blocks	number of 512-byte blocks allocated **
 		$stat[12]	=	$stat['blocks']		= ceil($this->getSize()/$stat['blksize']);
 		return $stat;
