@@ -88,7 +88,8 @@ class MyFS extends \LSS\StreamWrapper implements \LSS\StreamWrapperInterface {
 	//Directory Listing and Modification
 	//-----------------------------------------------------
 	public function dirClose(){
-		return closedir($this->dh);
+		$this->dl = array();
+		return true;
 	}
 
 	public function dirOpen($opts,$options){
