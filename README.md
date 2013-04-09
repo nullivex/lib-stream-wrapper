@@ -7,6 +7,10 @@ The below interface shows the usage of this library.
 
 There is also an example located at Example/MyFS.php this is used to test the library.
 
+NOTE: Only needed methods need to be extended. The interface is satisfied purely by extending.
+This is done to support PHP's allowance of unsupported features. Thus, by default
+everything is unsupported and you can define what needs to be supported.
+
 Interface
 ====
 ```php
@@ -23,10 +27,9 @@ interface StreamWrapperInterface extends WrapperInterface {
 	//$this->info structure and defaults
 	//	array(
 	//		 'size'		=>	0					//file size in bytes
-	//		,'created'	=>	null				//created timestamp
-	//		,'updated'	=>	null				//last updated timestamp
-	//		,'modified'	=>	null				//last modified timestamp
-	//		,'accessed'	=>	null				//last accessed timestamp
+	//		,'ctime'	=>	null				//created timestamp
+	//		,'mtime'	=>	null				//last modified timestamp
+	//		,'atime'	=>	null				//last accessed timestamp
 	//		,'dev'		=>	0					//device number
 	//		,'ino'		=>	0					//inode number
 	//		,'mode'		=>	octdec('0100666')	//permission mask
@@ -43,6 +46,9 @@ interface StreamWrapperInterface extends WrapperInterface {
 	//		 'path'		=>	'file path'
 	//		,'params'	=>	'query options passed'
 	//	)
+
+	//Return underlying stream resource
+	public function cast($cast_as);
 
 	//Populate file info
 	//	No return
@@ -119,14 +125,14 @@ interface StreamWrapperInterface extends WrapperInterface {
 
 	//Create a directory
 	//	return TRUE on success FALSE on failure
-	public function mkdir($opts,$mode,$options);
+	public function dirCreate($opts,$mode,$options);
 
 	//Move a directory or file
 	//	return TRUE on success FALSE on failure
-	public function rename($opts,$opts);
+	public function move($opts,$opts);
 
 	//Remove a directory
-	public function rmdir($opts,$options);
+	public function dirDelete($opts,$options);
 
 }
 
