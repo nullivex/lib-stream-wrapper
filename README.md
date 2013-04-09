@@ -23,10 +23,9 @@ interface StreamWrapperInterface extends WrapperInterface {
 	//$this->info structure and defaults
 	//	array(
 	//		 'size'		=>	0					//file size in bytes
-	//		,'created'	=>	null				//created timestamp
-	//		,'updated'	=>	null				//last updated timestamp
-	//		,'modified'	=>	null				//last modified timestamp
-	//		,'accessed'	=>	null				//last accessed timestamp
+	//		,'ctime'	=>	null				//created timestamp
+	//		,'mtime'	=>	null				//last modified timestamp
+	//		,'atime'	=>	null				//last accessed timestamp
 	//		,'dev'		=>	0					//device number
 	//		,'ino'		=>	0					//inode number
 	//		,'mode'		=>	octdec('0100666')	//permission mask
@@ -43,6 +42,9 @@ interface StreamWrapperInterface extends WrapperInterface {
 	//		 'path'		=>	'file path'
 	//		,'params'	=>	'query options passed'
 	//	)
+
+	//Return underlying stream resource
+	public function cast($cast_as);
 
 	//Populate file info
 	//	No return
