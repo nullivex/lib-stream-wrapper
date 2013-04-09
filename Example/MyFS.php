@@ -36,17 +36,12 @@ class MyFS extends \LSS\StreamWrapper implements \LSS\StreamWrapperInterface {
 	//Populate file info
 	//	No return
 	public function populateInfo($opts){
-		$this->info = array(
-			 'size'		=>	filesize($opts['path'])
-			,'created'	=>	filectime($opts['path'])
-			,'updated'	=>	filemtime($opts['path'])
-			,'modified'	=>	filemtime($opts['path'])
-			,'accessed'	=>	fileatime($opts['path'])
-			,'ino'		=>	fileinode($opts['path'])
-			,'mode'		=>	umask($opts['path'])
-			,'uid'		=>	fileowner($opts['path'])
-			,'gid'		=>	filegroup($opts['path'])
-		);
+		if(file_exists($opts['path']))
+			$this->info = array_merge($this->info,stat($opts['path']));
+	}
+
+	public function cast($cast_as){
+		return $this->fh;
 	}
 
 	public function open($opts,$mode,$options,$opened_path){

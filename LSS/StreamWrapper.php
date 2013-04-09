@@ -30,13 +30,13 @@ abstract class StreamWrapper implements StreamWrapperInterface {
 	private $dir_pointer = 0;
 	private $eof = false;
 	private $mode = null;
-	private $info = array();
+	protected $info = array();
 
 	public static function register(){
 		//(re)register the wrapper
 		if(in_array(static::$stream_prefix,stream_get_wrappers()))
 			stream_wrapper_unregister(static::$stream_prefix);
-		stream_wrapper_register(static::$stream_prefix,__NAMESPACE__.'\\'.get_called_class());
+		stream_wrapper_register(static::$stream_prefix,get_called_class());
 	}
 
 	public function __construct(){
@@ -51,10 +51,9 @@ abstract class StreamWrapper implements StreamWrapperInterface {
 		$this->node = null;
 		$this->info = array(
 			 'size'		=>	0					//file size in bytes
-			,'created'	=>	null				//created timestamp
-			,'updated'	=>	null				//last updated timestamp
-			,'modified'	=>	null				//last modified timestamp
-			,'accessed'	=>	null				//last accessed timestamp
+			,'ctime'	=>	null				//created timestamp
+			,'mtime'	=>	null				//last modified timestamp
+			,'atime'	=>	null				//last accessed timestamp
 			,'dev'		=>	0					//device number
 			,'ino'		=>	0					//inode number
 			,'mode'		=>	octdec('0100666')	//permission mask
@@ -76,15 +75,15 @@ abstract class StreamWrapper implements StreamWrapperInterface {
 	}
 
 	public function getCtime(){
-		return round(mda_get($this->info,'created'));
+		return round(mda_get($this->info,'ctime'));
 	}
 
 	public function getMtime(){
-		return round(mda_get($this->info,'updated'));
+		return round(mda_get($this->info,'mtime'));
 	}
 
 	public function getAtime(){
-		return round(mda_get($this->info,'accessed'));
+		return round(mda_get($this->info,'atime'));
 	}
 
 	public function getMode(){
@@ -93,17 +92,27 @@ abstract class StreamWrapper implements StreamWrapperInterface {
 
 	//general utility functions
 	public static function parsePath($path){
-		//get any modifiers and store them in params
-		parse_str(parse_url($path,PHP_URL_QUERY),$opts['params']);
-		//get the path
-		$opts['path'] = parse_url($path,PHP_URL_HOST);
+		//strip prefix
+		$path = str_replace(self::getPrefix(),'',$path);
+		//break off the query string if we can
+		if(strpos($path,'?') !== false){
+			$query = substr($path,strpos($path,'?'));
+			$path = substr($path,0,(strlen($path)-strlen($query)));
+			//remove the questionmark
+			$query = str_replace('?','',$query);
+		}
+		//setup opts
+		$opts['path'] = $path;
+		$opts['params'] = array();
+		if(isset($query)) parse_str($query,$opts['params']);
 		return $opts;
 	}
 
 	public static function unlink($path){
 		$opts = static::parsePath($path);
 		try {
-			return $this->delete($opts);
+			$wrapper = new static();
+			return $wrapper->delete($opts);
 		} catch(Exception $e){
 			dolog(self::getPrefix(false).' Error: [unlink] '.$e->getMessage(),LOG_WARN);
 			return false;
@@ -116,7 +125,8 @@ abstract class StreamWrapper implements StreamWrapperInterface {
 			$wrapper = new static();
 			$wrapper->reset();
 			$wrapper->populateInfo($opts);
-			return $wrapper->stat($wrapper->stream_stat());
+			$stat = $wrapper->stat($wrapper->stream_stat());
+			return $stat;
 		} catch(Exception $e){
 			dolog(self::getPrefix(false).' [url_stat] '.$e->getMessage(),LOG_WARN);
 			return false;
@@ -142,6 +152,10 @@ abstract class StreamWrapper implements StreamWrapperInterface {
 				break;
 		}
 		return true;
+	}
+
+	public function stream_cast($cast_as){
+		return $this->cast($cast_as);
 	}
 
 	public function stream_open($path,$mode,$options,&$opened_path){
@@ -205,7 +219,7 @@ abstract class StreamWrapper implements StreamWrapperInterface {
 		return $this->eof;
 	}
 
-	public function stream_seek($offset,$whence){
+	public function stream_seek($offset,$whence=SEEK_SET){
 		switch($whence){
 			case SEEK_END: //Set position to end-of-file plus offset.
 				$offset = (($this->getSize() - 1) + $offset) - $this->position;

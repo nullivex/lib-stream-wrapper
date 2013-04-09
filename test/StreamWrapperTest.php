@@ -22,11 +22,16 @@ require_once(dirname(__DIR__).'/vendor/autoload.php');
 require('lss_boot.php');
 require_once(dirname(__DIR__).'/Example/MyFS.php');
 
+use \Exception;
+use \Example\MyFS;
+
 class StreamWrapperTest extends PHPUNIT_Framework_TestCase {
 
 	static $hash = null;
 	static $fh = false;
 	static $data = null;
+	static $tmp_file = null;
+	static $tmp_file_write = null;
 
 	const TEST_SIZE = 131072;
 
@@ -48,29 +53,35 @@ class StreamWrapperTest extends PHPUNIT_Framework_TestCase {
 	}
 
 	public static function setUpBeforeClass(){
+		//setup test files
+		self::$tmp_file = MyFS::getPrefix().'/tmp/lsw-test?test=true';
+		self::$tmp_file_write = MyFS::getPrefix().'/tmp/lsw-test-write?test=true';
+		//register stream wrapper
+		MyFS::register();
 		//get random data for writing tmp file
 		self::$data = self::randString(self::TEST_SIZE); //added 1 byte to force the buffers not to line up
 		// self::$data = 'this is our test string';
 		self::$hash = sha1(self::$data);
 
 		//write the tmp file for operations
-		$fh = fopen(MyFS::getPrefix(),'w');
+		$fh = fopen(self::$tmp_file,'w');
 		fwrite($fh,self::$data);
 		fclose($fh);
 
 		//open the tmp file for working with
-		self::$fh = fopen(MyFS::getPrefix().self::$hash,'r');
+		self::$fh = fopen(self::$tmp_file,'r');
 	}
 
 	public static function tearDownAfterClass(){
 		//delete tmp file
 		fclose(self::$fh);
-		unlink(MyFS::getPrefix().self::$hash);
+		if(file_exists(self::$tmp_file))
+			unlink(self::$tmp_file);
 	}
 
 	public function test_fopen(){
 		return true;
-		$fh = fopen(MyFS::getPrefix().self::$hash,'r');
+		$fh = fopen(self::$tmp_file,'r');
 		$this->assertTrue(is_resource($fh));
 		$this->assertTrue(fclose($fh));
 	}
@@ -84,30 +95,30 @@ class StreamWrapperTest extends PHPUNIT_Framework_TestCase {
 	}
 
 	public function test_fwrite(){
-		$fh = fopen(MyFS::getPrefix(),'w');
+		$fh = fopen(self::$tmp_file_write,'w');
 		$this->assertTrue(is_resource($fh));
 		list($data,$hash) = $this->genData();
 		$this->assertEquals(strlen($data),fwrite($fh,$data));
 		$this->assertTrue(fclose($fh));
 		//read the file back and validate integrity
-		$read = file_get_contents(MyFS::getPrefix().$hash);
+		$read = file_get_contents(self::$tmp_file_write);
 		$this->assertEquals(strlen($data),strlen($read));
 		$this->assertEquals($hash,sha1($read));
 		//remove the remote file
-		$this->assertTrue(unlink(MyFS::getPrefix().$hash));
+		$this->assertTrue(unlink(self::$tmp_file_write));
 	}
 
 	public function test_copy(){
 		$tmp_file = tempnam('/tmp','vc-test');
 		list($data,$hash) = $this->genData();
 		$this->assertEquals(strlen($data),file_put_contents($tmp_file,$data));
-		$this->assertTrue(copy($tmp_file,MyFS::getPrefix()));
-		$this->assertTrue(unlink(MyFS::getPrefix().$hash));
+		$this->assertTrue(copy($tmp_file,self::$tmp_file_write));
+		$this->assertTrue(unlink(self::$tmp_file_write));
 	}
 
 	public function test_fflush(){
 		list($data,$hash) = $this->genData();
-		$fh = fopen(MyFS::getPrefix(),'w');
+		$fh = fopen(self::$tmp_file_write,'w');
 		$this->assertTrue(is_resource($fh));
 		$this->assertEquals(strlen($data),fwrite($fh,$data));
 		$this->assertTrue(fflush($fh));
@@ -121,17 +132,17 @@ class StreamWrapperTest extends PHPUNIT_Framework_TestCase {
 	public function test_fgetcsv(){
 		$data = '1,2,3,4,5';
 		$hash = sha1($data);
-		$fh = fopen(MyFS::getPrefix(),'w');
+		$fh = fopen(self::$tmp_file_write,'w');
 		$this->assertTrue(is_resource($fh));
 		$this->assertEquals(strlen($data),fwrite($fh,$data));
 		$this->assertTrue(fclose($fh));
-		$fh = fopen(MyFS::getPrefix().$hash,'r');
+		$fh = fopen(self::$tmp_file_write,'r');
 		$this->assertTrue(is_resource($fh));
 		$data = fgetcsv($fh);
 		$this->assertEquals($hash,sha1(implode(',',$data)));
 		$this->assertEquals(5,count($data));
 		$this->assertTrue(fclose($fh));
-		$this->assertTrue(unlink(MyFS::getPrefix().$hash));
+		$this->assertTrue(unlink(self::$tmp_file_write));
 	}
 
 	public function test_fgets(){
@@ -143,19 +154,19 @@ class StreamWrapperTest extends PHPUNIT_Framework_TestCase {
 	}
 
 	public function test_fileatime(){
-		$this->assertEquals(0,fileatime(MyFS::getPrefix().self::$hash));
+		$this->assertGreaterThan(0,fileatime(self::$tmp_file));
 	}
 
 	public function test_filectime(){
-		$this->assertGreaterThan(0,filectime(MyFS::getPrefix().self::$hash));
+		$this->assertGreaterThan(0,filectime(self::$tmp_file));
 	}
 
 	public function test_filesize(){
-		$this->assertEquals(self::TEST_SIZE,filesize(MyFS::getPrefix().self::$hash));
+		$this->assertEquals(self::TEST_SIZE,filesize(self::$tmp_file));
 	}
 
 	public function test_filetype(){
-		$this->assertEquals('file',filetype(MyFS::getPrefix().self::$hash));
+		$this->assertEquals('file',filetype(self::$tmp_file));
 	}
 
 	public function test_fscanf(){
@@ -183,15 +194,15 @@ class StreamWrapperTest extends PHPUNIT_Framework_TestCase {
 	}
 
 	public function test_is_writable(){
-		$this->assertFalse(is_writable(MyFS::getPrefix().self::$hash));
+		$this->assertTrue(is_writable(self::$tmp_file_write));
 	}
 
 	public function test_is_readable(){
-		$this->assertTrue(is_readable(MyFS::getPrefix().self::$hash));
+		$this->assertTrue(is_readable(self::$tmp_file));
 	}
 
 	public function test_readfile(){
-		// $this->assertEquals(self::TEST_SIZE,readfile(MyFS::getPrefix().self::$hash));
+		// $this->assertEquals(self::TEST_SIZE,readfile(self::$tmp_file));
 		// $data = ob_get_contents(); ob_clean();
 		// $this->assertEquals(self::TEST_SIZE,strlen($data));
 	}
@@ -205,23 +216,23 @@ class StreamWrapperTest extends PHPUNIT_Framework_TestCase {
 	}
 
 	public function test_stat(){
-		$this->assertEquals(26,count(stat(MyFS::getPrefix().self::$hash)));
+		$this->assertEquals(26,count(stat(self::$tmp_file)));
 	}
 
 	/**
 	 * @expectedException ErrorException
 	 */
 	public function test_touch(){
-		touch(MyFS::getPrefix().self::$hash);
+		touch(self::$tmp_file);
 	}
 
 	public function test_unlink(){
 		list($data,$hash) = $this->genData();
-		$fh = fopen(MyFS::getPrefix(),'w');
+		$fh = fopen(self::$tmp_file_write,'w');
 		$this->assertTrue(is_resource($fh));
 		$this->assertEquals(strlen($data),fwrite($fh,$data));
 		$this->assertTrue(fclose($fh));
-		unlink(MyFS::getPrefix().$hash);
+		unlink(self::$tmp_file_write);
 	}
 
 }
