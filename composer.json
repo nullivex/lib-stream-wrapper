@@ -1,0 +1,38 @@
+{
+	 "name":				"openlss/lib-stream-wrapper"
+	,"homepage":			"http://openlss.org"
+	,"description":			"Simple library that implements PHP's stream wrapper with simpler extension for rapid wrapper development."
+	,"license":				"LGPL-3.0+"
+	,"type":				"library"
+	,"keywords": [
+		 "stream"
+		,"wrapper"
+		,"resource"
+		,"php stream"
+	]
+	,"authors": [
+		 {
+			 "name":		"Bryan Tong"
+			,"email":		"contact@nullivex.com"
+			,"homepage":	"http://bryantong.com"
+		}
+		,{
+			 "name":		"Tony Butler"
+			,"email":		"spudz76@gmail.com"
+			,"homepage":	"http://openlss.org"
+		}
+	]
+	,"require": {
+		 "php":					">=5.3.2"
+		,"openlss/func-log":	"dev-master"
+		,"openlss/func-mda":	"dev-master"
+	}
+	,"require-dev": {
+		 "openlss/core-boot":	"dev-master"
+	}
+	,"autoload": {
+		"psr-0": {
+			"LSS":	""
+		}
+	}
+}
