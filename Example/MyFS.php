@@ -93,6 +93,8 @@ class MyFS extends \LSS\StreamWrapper implements \LSS\StreamWrapperInterface {
 
 	public function dirOpen($opts,$options){
 		$this->dl = scandir($opts['path']);
+		if($this->dl === false) return false;
+		return true;
 	}
 
 	public function dirRead($pointer){
@@ -101,15 +103,15 @@ class MyFS extends \LSS\StreamWrapper implements \LSS\StreamWrapperInterface {
 		return false;
 	}
 
-	public function mkdir($opts,$mode,$options){
+	public function dirCreate($opts,$mode,$options){
 		return mkdir($opts['path'],$mode);
 	}
 
-	public function rename($opts,$opts){
+	public function move($opts,$opts){
 		return rename($opts['path'],$opts['path']);
 	}
 
-	public function rmdir($opts,$options){
+	public function dirDelete($opts,$options){
 		return rmdir($opts['path'],$options);
 	}
 

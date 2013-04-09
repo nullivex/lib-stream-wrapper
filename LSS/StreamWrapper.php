@@ -359,8 +359,75 @@ abstract class StreamWrapper implements StreamWrapperInterface {
 
 	public function setBufferLimit($limit){}
 
+	
+	public function populateInfo($opts){
+		//void
+	}
+
+	public function cast($cast_as){
+		return null;
+	}
+
+	public function open($opts,$mode,$options,$opened_path){
+		return false;
+	}
+
+	public function touch($opts){
+		return false;
+	}
+
+	public function setOwner($opts,$value){
+		return false;
+	}
+
+	public function setGroup($opts,$value){
+		return false;
+	}
+
+	public function setPermissions($opts,$value){
+		return false;
+	}
+	public function read($position=0,$length=null){
+		return false;
+	}
+
+	public function write($position=0,$data=null){
+		return false;
+	}
+	
+	public function close(){
+		return false;
+	}
+
+	public function delete($opts){
+		return false;
+	}
+	
+	//-----------------------------------------------------
+	//Directory Listing and Modification
+	//-----------------------------------------------------
 	public function dirClose(){
-		return true;
+		return false;
+	}
+
+	public function dirOpen($opts,$options){
+		return false;
+	}
+
+	public function dirRead($pointer){
+		return false;
+	}
+
+	public function dirCreate($opts,$mode,$options){
+		return false;
+	}
+
+	public function move($opts,$opts){
+		return false;
+	}
+
+	public function dirDelete($opts,$options){
+		return false;
 	}
 
 }

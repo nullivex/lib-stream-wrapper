@@ -130,13 +130,13 @@ interface StreamWrapperInterface extends WrapperInterface {
 
 	//Create a directory
 	//	return TRUE on success FALSE on failure
-	public function mkdir($opts,$mode,$options);
+	public function dirCreate($opts,$mode,$options);
 
 	//Move a directory or file
 	//	return TRUE on success FALSE on failure
-	public function rename($opts,$opts);
+	public function move($opts,$opts);
 
 	//Remove a directory
-	public function rmdir($opts,$options);
+	public function dirDelete($opts,$options);
 
 }
