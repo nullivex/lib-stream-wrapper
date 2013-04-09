@@ -30,6 +30,7 @@ class StreamWrapperTest extends PHPUNIT_Framework_TestCase {
 	static $hash = null;
 	static $fh = false;
 	static $data = null;
+	static $tmp_dir = null;
 	static $tmp_file = null;
 	static $tmp_file_write = null;
 
@@ -70,6 +71,12 @@ class StreamWrapperTest extends PHPUNIT_Framework_TestCase {
 
 		//open the tmp file for working with
 		self::$fh = fopen(self::$tmp_file,'r');
+		
+		//setup dir tree for testing
+		self::$tmp_dir = '/tmp/lsw-test-dir';
+		mkdir(self::$tmp_dir);
+		touch(self::$tmp_dir.'/file1');
+		touch(self::$tmp_dir.'/file2');
 	}
 
 	public static function tearDownAfterClass(){
@@ -77,6 +84,10 @@ class StreamWrapperTest extends PHPUNIT_Framework_TestCase {
 		fclose(self::$fh);
 		if(file_exists(self::$tmp_file))
 			unlink(self::$tmp_file);
+		//remove tmpdir
+		unlink(self::$tmp_dir.'/file1');
+		unlink(self::$tmp_dir.'/file2');
+		rmdir(self::$tmp_dir);
 	}
 
 	public function test_fopen(){
@@ -233,6 +244,20 @@ class StreamWrapperTest extends PHPUNIT_Framework_TestCase {
 		$this->assertEquals(strlen($data),fwrite($fh,$data));
 		$this->assertTrue(fclose($fh));
 		unlink(self::$tmp_file_write);
+	}
+
+	public function test_dir(){
+		$dir_path = MyFS::getPrefix().self::$tmp_dir;
+		$dir = $dir = opendir($dir_path);
+		$this->assertTrue(is_resource($dir));
+		while(($f = readdir($dir)) !== false){
+			$this->assertGreaterThan(0,strlen($f));
+		}
+		$this->assertTrue(is_null(rewinddir($dir)));
+		$this->assertTrue(is_null(closedir($dir)));
+		$dl = scandir($dir_path);
+		$this->assertTrue(is_array($dl));
+		$this->assertGreaterThan(0,count($dl));
 	}
 
 }

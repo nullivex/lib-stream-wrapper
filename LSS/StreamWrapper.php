@@ -331,7 +331,7 @@ abstract class StreamWrapper implements StreamWrapperInterface {
 
 	public function dir_rewinddir(){
 		$this->dir_pointer = 0;
-		return $dir;
+		return true;
 	}
 
 	public function mkdir($path,$mode,$options){
